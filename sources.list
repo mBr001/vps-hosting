@@ -1,0 +1,8 @@
+deb http://debian.mirrors.ovh.net/debian/ jessie main contrib non-free
+deb-src http://debian.mirrors.ovh.net/debian/ jessie main contrib non-free
+
+deb http://security.debian.org/ jessie/updates main contrib non-free
+deb-src http://security.debian.org/ jessie/updates main contrib non-free
+
+deb http://debian.mirrors.ovh.net/debian/ jessie-updates main contrib non-free
+deb-src http://debian.mirrors.ovh.net/debian/ jessie-updates main contrib non-free
