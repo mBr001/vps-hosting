@@ -58,7 +58,6 @@ lvextend -l +100%FREE /dev/$volgroupname/$lvmname
 resize2fs /dev/$volgroupname/$lvmname
 
 read -r -p "Your disksize has been adjusted. Do you want to run 'df -h', and see if it worked? [(y)es/(n)o] `echo $'\nChoose an option: '`" answer
-printf "\n"
 if [[ "$answer" =~ ^(yes|y)$ ]]
 then
 df -h
