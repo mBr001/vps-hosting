@@ -1,0 +1,67 @@
+#!/bin/bash
+# This simple script allows to extend the disksize to the maximum.
+#
+# Place this script in /usr/bin
+#
+# Usage: fix-disksize
+# -----------------------------------------------------------------------------
+
+# Getting Distribution
+distro=$(cat /etc/issue | head -n 2 | tr -d "\n" | tr "[:upper:]" "[:lower:]")
+# Getting name of disk
+device=$(fdisk -l | grep -w 8e | head -n 1 | cut -c-8)
+# Count partitions 
+partcount=$(fdisk -l | grep $device | sed 1d | grep -c $device)
+# Set new partition count
+newpartnum=$(($partcount+1))
+# Get current startsector
+startsector=$(fdisk -l | grep -w 8e | tail -1 | tr " " "\n" | sed "/^$/d" | head -n 3 | tail -1)
+# Set new startsector
+newstartsector=$(($startsector+1))
+# Get current endsector
+endsector=$(fdisk -l | grep sectors | head -n 1 | tr " " "\n" | tail -2 | head -n 1)
+# Set new endsector
+newendsector=$(($endsector-1))
+# Create partition
+fdisk $device <<EOF
+n
+p
+$newpartnum
+$newstartsector
+$newendsector
+t
+$newpartnum
+8e
+w
+EOF
+# Re-initialize partitiontable
+partprobe
+
+# Getting name of disk
+device=$(fdisk -l | grep -w 8e | head -n 1 | cut -c-8)
+# Getting partition number
+partnumber=$(fdisk -l | grep $device | sed 1d | grep -c $device)
+# Create PV
+pvcreate $device$partnumber
+# Get Volume Group name
+volgroupname=$(vgdisplay | grep -w "VG Name" | cut -b10- | tr -d " ")
+# Extend Volume
+vgextend $volgroupname $device$partnumber
+# Get partition name
+volgroupchars=$(echo $volgroupname | wc --chars)
+totalchars=$(($volgroupchars+13))
+# Set partition name
+lvmname="root"
+# Extend logical volume
+lvextend -l +100%FREE /dev/$volgroupname/$lvmname
+# Resize blocks of partition
+resize2fs /dev/$volgroupname/$lvmname
+
+read -r -p "Your disksize has been adjusted. Do you want to run 'df -h', and see if it worked? [(y)es/(n)o] `echo $'\nChoose an option: '`" answer
+printf "\n"
+if [[ "$answer" =~ ^(yes|y)$ ]]
+then
+df -h
+else
+echo "Okay. We're done now."
+fi
